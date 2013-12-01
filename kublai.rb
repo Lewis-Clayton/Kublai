@@ -21,7 +21,7 @@ class Kublai
     signiture_string = sign(params_string(payload.clone))
     uri = URI.parse("https://api.btcchina.com/api_trade_v1.php")
     http = Net::HTTP.new(uri.host, uri.port)
-    # http.set_debug_output($stderr)
+    http.set_debug_output($stderr)
     http.use_ssl = true
     http.verify_mode = OpenSSL::SSL::VERIFY_PEER
     http.read_timeout = 15
@@ -33,7 +33,7 @@ class Kublai
     if response.body['result'] && response.body['result'] == 'success'
       response.body['return']
     else
-      JSON.parse(response.body)
+      JSON.parse(response.body)['result']
     end
   end
 
@@ -63,7 +63,7 @@ class Kublai
   end
 
   def get_deposit_address
-    get_account_info['result']['profile']['btc_deposit_address']
+    get_account_info['profile']['btc_deposit_address']
   end
 
   def get_market_depth
@@ -71,7 +71,7 @@ class Kublai
     post_data['tonce']  = (Time.now.to_f * 1000000).to_i.to_s
     post_data['method'] = 'getMarketDepth2'
     post_data['params'] = []
-    request(post_data)
+    request(post_data)["market_depth"]
   end
 
   def buy(price, amount)
@@ -103,9 +103,9 @@ class Kublai
   end
 
   def current_price
-    market_depth = get_market_depth['result']['market_depth']
-    ask = market_depth['result']['ask'][0]['price']
-    bid = market_depth['result']['bid'][0]['price']
+    market_depth = get_market_depth
+    ask = market_depth['ask'][0]['price']
+    bid = market_depth['bid'][0]['price']
     (ask + bid) / 2
   end
 end
