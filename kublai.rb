@@ -78,7 +78,7 @@ class Kublai
     signiture_string = sign(params_string(payload.clone))
     uri = URI.parse("https://api.btcchina.com/api_trade_v1.php")
     http = Net::HTTP.new(uri.host, uri.port)
-    http.set_debug_output($stderr)
+    # http.set_debug_output($stderr)
     http.use_ssl = true
     http.verify_mode = OpenSSL::SSL::VERIFY_PEER
     http.read_timeout = 15
