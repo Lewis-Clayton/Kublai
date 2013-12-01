@@ -11,49 +11,6 @@ class Kublai
     @secret_key = secret
   end
 
-  def sign(params_string)
-    signiture = OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), @secret_key, params_string)
-    'Basic ' + Base64.strict_encode64(@access_key + ':' + signiture)
-  end
-
-  def request(post_data)
-    payload = params_hash(post_data)
-    signiture_string = sign(params_string(payload.clone))
-    uri = URI.parse("https://api.btcchina.com/api_trade_v1.php")
-    http = Net::HTTP.new(uri.host, uri.port)
-    # http.set_debug_output($stderr)
-    http.use_ssl = true
-    http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-    http.read_timeout = 15
-    http.open_timeout = 5
-    request = Net::HTTP::Post.new(uri.request_uri)
-    request.body = payload.to_json
-    request.initialize_http_header({"Accept-Encoding" => "identity", 'Json-Rpc-Tonce' => post_data['tonce'], 'Authorization' => signiture_string, 'Content-Type' => 'application/json', "User-Agent" => "BTCChina Ruby Wrapper"})
-    response = http.request(request)
-    if response.body['result'] && response.body['result'] == 'success'
-      response.body['return']
-    else
-      JSON.parse(response.body)['result']
-    end
-  end
-
-  def params_string(post_data)
-    post_data['params'] = post_data['params'].join(',')
-    params_hash(post_data).collect{|k, v| "#{k}=#{v}"} * '&'
-  end
-
-  def params_hash(post_data)
-    post_data['accesskey'] = @access_key
-    post_data['requestmethod'] = 'post'
-    post_data['id'] = post_data['tonce'] unless post_data.keys.include?('id')
-    fields=['tonce','accesskey','requestmethod','id','method','params']
-    ordered_data = {}
-    fields.each do |field|
-      ordered_data[field] = post_data[field]
-    end
-    ordered_data
-  end
-
   def get_account_info
     post_data = {}
     post_data['method'] = 'getAccountInfo'
@@ -107,5 +64,50 @@ class Kublai
     ask = market_depth['ask'][0]['price']
     bid = market_depth['bid'][0]['price']
     (ask + bid) / 2
+  end
+
+  private
+  
+  def sign(params_string)
+    signiture = OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), @secret_key, params_string)
+    'Basic ' + Base64.strict_encode64(@access_key + ':' + signiture)
+  end
+
+  def request(post_data)
+    payload = params_hash(post_data)
+    signiture_string = sign(params_string(payload.clone))
+    uri = URI.parse("https://api.btcchina.com/api_trade_v1.php")
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.set_debug_output($stderr)
+    http.use_ssl = true
+    http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+    http.read_timeout = 15
+    http.open_timeout = 5
+    request = Net::HTTP::Post.new(uri.request_uri)
+    request.body = payload.to_json
+    request.initialize_http_header({"Accept-Encoding" => "identity", 'Json-Rpc-Tonce' => post_data['tonce'], 'Authorization' => signiture_string, 'Content-Type' => 'application/json', "User-Agent" => "BTCChina Ruby Wrapper"})
+    response = http.request(request)
+    if response.body['result'] && response.body['result'] == 'success'
+      response.body['return']
+    else
+      JSON.parse(response.body)['result']
+    end
+  end
+
+  def params_string(post_data)
+    post_data['params'] = post_data['params'].join(',')
+    params_hash(post_data).collect{|k, v| "#{k}=#{v}"} * '&'
+  end
+
+  def params_hash(post_data)
+    post_data['accesskey'] = @access_key
+    post_data['requestmethod'] = 'post'
+    post_data['id'] = post_data['tonce'] unless post_data.keys.include?('id')
+    fields=['tonce','accesskey','requestmethod','id','method','params']
+    ordered_data = {}
+    fields.each do |field|
+      ordered_data[field] = post_data[field]
+    end
+    ordered_data
   end
 end
