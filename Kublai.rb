@@ -4,7 +4,7 @@ require "uri"
 require 'json'
 
 
-class BTCChina
+class Kublai
 
   def initialize(access, secret)
     @access_key = access
