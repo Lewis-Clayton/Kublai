@@ -90,7 +90,7 @@ class Kublai
     signiture_string = sign(params_string(payload.clone))
     request = Net::HTTP::Post.new(uri.request_uri)
     request.body = payload.to_json
-    request.initialize_http_header({"Accept-Encoding" => "identity", 'Json-Rpc-Tonce' => post_data['tonce'], 'Authorization' => signiture_string, 'Content-Type' => 'application/json', "User-Agent" => "BTCChina Ruby Wrapper"})
+    request.initialize_http_header({"Accept-Encoding" => "identity", 'Json-Rpc-Tonce' => post_data['tonce'], 'Authorization' => signiture_string, 'Content-Type' => 'application/json', "User-Agent" => "Kublai"})
     connection(uri, request)
   end
 
@@ -99,7 +99,7 @@ class Kublai
     # http.set_debug_output($stderr)
     http.use_ssl = true
     http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-    http.read_timeout = 15
+    http.read_timeout = 20
     http.open_timeout = 5
     response(http.request(request))
   end
