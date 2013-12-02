@@ -6,17 +6,16 @@ require 'json'
 
 class Kublai
 
-  def initialize(access, secret)
+  def initialize(access='', secret='')
     @access_key = access
     @secret_key = secret
   end
-
+  
   def get_account_info
-    post_data = {}
+    post_data = initial_post_data
     post_data['method'] = 'getAccountInfo'
     post_data['params'] = []
-    post_data['tonce']  = (Time.now.to_f * 1000000).to_i.to_s
-    request(post_data)
+    post_request(post_data)
   end
 
   def get_deposit_address
@@ -24,39 +23,35 @@ class Kublai
   end
 
   def get_market_depth
-    post_data = {}
-    post_data['tonce']  = (Time.now.to_f * 1000000).to_i.to_s
+    post_data = initial_post_data
     post_data['method'] = 'getMarketDepth2'
     post_data['params'] = []
-    request(post_data)["market_depth"]
+    post_request(post_data)["market_depth"]
   end
 
   def buy(price, amount)
     price = price.to_f.round(5)
     amount = amount.to_f.round(8)
-    post_data = {}
-    post_data['tonce']  = (Time.now.to_f * 1000000).to_i.to_s
+    post_data = initial_post_data
     post_data['method']='buyOrder'
     post_data['params']=[price, amount]
-    request(post_data)
+    post_request(post_data)
   end
 
   def sell(price, amount)
     price = price.to_f.round(5)
     amount = amount.to_f.round(8)
-    post_data = {}
-    post_data['tonce']  = (Time.now.to_f * 1000000).to_i.to_s
+    post_data = initial_post_data
     post_data['method']='sellOrder'
     post_data['params']=[price, amount]
-    request(post_data)
+    post_request(post_data)
   end
 
   def cancel(order_id)
-    post_data = {}
-    post_data['tonce']  = (Time.now.to_f * 1000000).to_i.to_s
+    post_data = initial_post_data
     post_data['method']='cancelOrder'
     post_data['params']=[order_id]
-    request(post_data)
+    post_request(post_data)
   end
 
   def current_price
@@ -66,31 +61,61 @@ class Kublai
     (ask + bid) / 2
   end
 
+  def ticker
+    get_request("https://data.btcchina.com/data/ticker")
+  end
+
   private
-  
+
   def sign(params_string)
     signiture = OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), @secret_key, params_string)
     'Basic ' + Base64.strict_encode64(@access_key + ':' + signiture)
   end
 
-  def request(post_data)
+  def get_request(url)
+    uri = URI.parse(url)
+    request = Net::HTTP::Get.new(uri.request_uri)
+    connection(uri, request)
+  end
+
+  def initial_post_data
+    post_data = {}
+    post_data['tonce']  = (Time.now.to_f * 1000000).to_i.to_s
+    post_data
+  end
+
+  def post_request(post_data)
+    uri = URI.parse("https://api.btcchina.com/api_trade_v1.php")
     payload = params_hash(post_data)
     signiture_string = sign(params_string(payload.clone))
-    uri = URI.parse("https://api.btcchina.com/api_trade_v1.php")
+    request = Net::HTTP::Post.new(uri.request_uri)
+    request.body = payload.to_json
+    request.initialize_http_header({"Accept-Encoding" => "identity", 'Json-Rpc-Tonce' => post_data['tonce'], 'Authorization' => signiture_string, 'Content-Type' => 'application/json', "User-Agent" => "BTCChina Ruby Wrapper"})
+    connection(uri, request)
+  end
+
+  def connection(uri, request)
     http = Net::HTTP.new(uri.host, uri.port)
     # http.set_debug_output($stderr)
     http.use_ssl = true
     http.verify_mode = OpenSSL::SSL::VERIFY_PEER
     http.read_timeout = 15
     http.open_timeout = 5
-    request = Net::HTTP::Post.new(uri.request_uri)
-    request.body = payload.to_json
-    request.initialize_http_header({"Accept-Encoding" => "identity", 'Json-Rpc-Tonce' => post_data['tonce'], 'Authorization' => signiture_string, 'Content-Type' => 'application/json', "User-Agent" => "BTCChina Ruby Wrapper"})
-    response = http.request(request)
-    if response.body['result'] && response.body['result'] == 'success'
-      response.body['return']
+    response(http.request(request))
+  end
+
+  def response(response_data)
+    if response_data.code == '200' && response_data.body['result']
+      JSON.parse(response_data.body)['result']
+    elsif response_data.code == '200' && response_data.body['ticker']
+      JSON.parse(response_data.body)['ticker']
+    elsif response_data.code == '200' && response_data.body['error']
+      error = JSON.parse(response_data.body)
+      warn("Error Code: #{error['error']['code']}")
+      warn("Error Message: #{error['error']['message']}")
+      false
     else
-      JSON.parse(response.body)['result']
+      raise
     end
   end
 
