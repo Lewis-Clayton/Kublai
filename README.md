@@ -1,5 +1,6 @@
 Kublai - BTCChina API Wrapper
 ======
+[![Gem Version](https://badge.fury.io/rb/kublai.png)](http://badge.fury.io/rb/kublai)
 
 What
 ==========
@@ -11,7 +12,7 @@ JSON Request
 	{"method":"requestWithdrawal","params":["BTC",0.1],"id":1}
 
 	def request_withdrawal(amount)
-	  amount = amount.to_f.round(8)
+	  amount = cut_off(amount, 8)
 	  post_data = initial_post_data
 	  post_data['method']='requestWithdrawal'
 	  post_data['params']=['BTC', amount]
@@ -39,25 +40,25 @@ Or install it yourself as:
     $ gem install kublai
 
 ## Usage
+```
+access_key = "20c0bc14-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+secret_key = "66d218e5-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+kublai = Kublai::BTCChina.new(access_key, secret_key )
 
-   access_key = "20c0bc14-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-   secret_key = "66d218e5-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-   kublai = Kublai::BTCChina.new(access_key, secret_key )
+kublai.ticker
+=> {"high"=>"5999.00", "low"=>"3821.13", "buy"=>"4978.96", "sell"=>"4990.00", "last"=>"4978.96", "vol"=>"149135.77100000"}
 
-   kublai.ticker
-   => {"high"=>"5999.00", "low"=>"3821.13", "buy"=>"4978.96", "sell"=>"4990.00", "last"=>"4978.96", "vol"=>"149135.77100000"}
+kublai.current_price
+=> 4855.995
 
-   kublai.current_price
-   => 4855.995
+kublai.buy(4856, 6)
+Error Code: -32003
+Error Message: Insufficient CNY balance
+=> false
 
-	 kublai.buy(4856, 6)
-	 Error Code: -32003
-	 Error Message: Insufficient CNY balance
-	 => false
-
-	 kublai.buy(4856, 1.001339102)
-	 => true
-
+kublai.buy(4856, 1.001339102)
+=> true
+```
 
 ## Contributing
 

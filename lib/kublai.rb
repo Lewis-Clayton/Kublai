@@ -35,7 +35,7 @@ module Kublai
 
     def buy(price, amount)
       price = cut_off(price, 5)
-      amount = cut_off(amount, 5)
+      amount = cut_off(amount, 8)
       post_data = initial_post_data
       post_data['method']='buyOrder'
       post_data['params']=[price, amount]
@@ -44,7 +44,7 @@ module Kublai
 
     def sell(price, amount)
       price = cut_off(price, 5)
-      amount = cut_off(amount, 5)
+      amount = cut_off(amount, 8)
       post_data = initial_post_data
       post_data['method']='sellOrder'
       post_data['params']=[price, amount]
