@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Lewis Clayton"]
   spec.email         = ["mail@l.ew.is"]
   spec.date          = '2013-12-07'
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
+  spec.description   = %q{Ruby wrapper for the BTCChina Trade API. BTCChina allows you to trade Chinese Yuan (CNY) for Bitcoins (BTC) or Bitcoins for Chinese Yuan.}
+  spec.summary       = %q{Ruby wrapper for the BTCChina Trade API.}
   spec.homepage      = 'http://l.ew.is/kublai_btcchina_api_ruby/'
   spec.license       = "MIT"
 

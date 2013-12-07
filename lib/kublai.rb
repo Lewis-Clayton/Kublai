@@ -1,4 +1,9 @@
-require "kublai/version"
+require 'kublai/version'
+require 'base64'
+require 'net/https'
+require 'uri'
+require 'json'
+
 
 module Kublai
   class BTCChina
@@ -7,6 +12,8 @@ module Kublai
       @access_key = access
       @secret_key = secret
     end
+
+    public
 
     def get_account_info
       post_data = initial_post_data
@@ -27,8 +34,8 @@ module Kublai
     end
 
     def buy(price, amount)
-      price = price.to_f.round(5)
-      amount = amount.to_f.round(8)
+      price = cut_off(price, 5)
+      amount = cut_off(amount, 5)
       post_data = initial_post_data
       post_data['method']='buyOrder'
       post_data['params']=[price, amount]
@@ -36,8 +43,8 @@ module Kublai
     end
 
     def sell(price, amount)
-      price = price.to_f.round(5)
-      amount = amount.to_f.round(8)
+      price = cut_off(price, 5)
+      amount = cut_off(amount, 5)
       post_data = initial_post_data
       post_data['method']='sellOrder'
       post_data['params']=[price, amount]
@@ -63,6 +70,13 @@ module Kublai
     end
 
     private
+
+    def cut_off(num, exp=0)
+      multiplier = 10 ** exp
+      cut = ((num * multiplier).floor).to_f/multiplier.to_f
+      return cut.floor if cut == cut.floor
+      cut
+    end
 
     def sign(params_string)
       signiture = OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), @secret_key, params_string)
@@ -112,7 +126,10 @@ module Kublai
         warn("Error Message: #{error['error']['message']}")
         false
       else
-        raise
+        warn("Error Code: #{response_data.code}")
+        warn("Error Message: #{response_data.message}")
+        warn("check your accesskey/privatekey") if response_data.code == '401'
+        false
       end
     end
 
