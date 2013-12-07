@@ -24,4 +24,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake"
 
   spec.has_rdoc      = false
+
+  spec.post_install_message = %q{Thanks for installing! Support this gem - 16kPvA7CoYCUdjbbqeaWHNf5zStGuLAmXG }
 end
